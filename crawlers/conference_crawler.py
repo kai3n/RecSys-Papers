@@ -32,7 +32,13 @@ S2_VENUE_ALIASES = {
 }
 
 # Seconds to wait between S2 API calls (free tier: ~1 req/s)
-S2_DELAY = 1.5
+S2_DELAY = 2.0
+
+# Global timestamp of last 429 — we pause all S2 calls for S2_COOLDOWN after a 429
+import threading
+_s2_lock = threading.Lock()
+_s2_cooldown_until = 0.0
+S2_COOLDOWN = 65.0  # seconds to pause after any 429
 
 
 def fetch(config: dict, known_titles: set = None) -> List[Dict]:
@@ -227,20 +233,29 @@ def _s2_search_with_retry(
     query: str,
     year: Optional[int] = None,
     limit: int = 100,
-    max_retries: int = 4,
+    max_retries: int = 3,
 ) -> List[Dict]:
+    global _s2_cooldown_until
     params: Dict = {"query": query, "fields": S2_FIELDS, "limit": limit}
     if year:
         params["year"] = str(year)
 
-    wait = 5.0
     for attempt in range(max_retries):
+        # Honour global cooldown set by any previous 429
+        with _s2_lock:
+            wait_until = _s2_cooldown_until
+        remaining = wait_until - time.time()
+        if remaining > 0:
+            logger.info(f"  S2 cooldown: waiting {remaining:.0f}s...")
+            time.sleep(remaining)
+
         try:
             resp = requests.get(S2_SEARCH, params=params, timeout=20)
             if resp.status_code == 429:
-                logger.info(f"  S2 rate-limited, waiting {wait:.0f}s...")
-                time.sleep(wait)
-                wait *= 2
+                with _s2_lock:
+                    _s2_cooldown_until = time.time() + S2_COOLDOWN
+                logger.info(f"  S2 rate-limited, cooling down {S2_COOLDOWN:.0f}s...")
+                time.sleep(S2_COOLDOWN)
                 continue
             resp.raise_for_status()
             return resp.json().get("data", [])
@@ -249,8 +264,7 @@ def _s2_search_with_retry(
             break
         except Exception as e:
             logger.warning(f"  S2 error: {e}")
-            time.sleep(wait)
-            wait *= 2
+            break
 
     return []
 
