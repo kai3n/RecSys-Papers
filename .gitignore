@@ -1,4 +1,7 @@
-output/
+output/*.db
+output/*.db-shm
+output/*.db-wal
+output/*.md
 __pycache__/
 *.pyc
 .DS_Store
