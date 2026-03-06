@@ -24,7 +24,7 @@ def _build_query(keywords: List[str], categories: List[str]) -> str:
     return f"({kw_query}) AND ({cat_query})"
 
 
-def fetch(config: dict) -> List[Dict]:
+def fetch(config: dict, known_titles: set = None) -> List[Dict]:
     arxiv_cfg = config["sources"]["arxiv"]
     all_keywords = config["keywords"]["primary"] + config["keywords"]["secondary"]
     categories = arxiv_cfg["categories"]
@@ -33,6 +33,9 @@ def fetch(config: dict) -> List[Dict]:
 
     end_date_str = config["date_range"].get("end")
     end_date = datetime.strptime(end_date_str, "%Y-%m-%d") if end_date_str else datetime.today()
+
+    if known_titles is None:
+        known_titles = set()
 
     query = _build_query(all_keywords, categories)
     papers = []
@@ -77,9 +80,13 @@ def fetch(config: dict) -> List[Dict]:
                 continue
             seen_ids.add(arxiv_id)
 
+            title = entry.get("title", "").replace("\n", " ").strip()
+            if title.lower() in known_titles:
+                continue
+
             authors = [a.name for a in entry.get("authors", [])]
             paper = {
-                "title": entry.get("title", "").replace("\n", " ").strip(),
+                "title": title,
                 "abstract": entry.get("summary", "").replace("\n", " ").strip(),
                 "authors": authors,
                 "date": pub_str[:10] if pub_str else "",

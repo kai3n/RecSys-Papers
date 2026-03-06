@@ -51,16 +51,20 @@ def run(args):
     db = PaperDB(str(DB_PATH))
 
     if not args.export_only:
+        known_titles = db.existing_titles()
+        if known_titles:
+            logger.info(f"DB already has {len(known_titles)} papers — skipping duplicates")
+
         all_raw = []
 
         if not args.conf_only and config["sources"]["arxiv"]["enabled"]:
             logger.info("=== Crawling arXiv ===")
-            arxiv_papers = arxiv_crawler.fetch(config)
+            arxiv_papers = arxiv_crawler.fetch(config, known_titles)
             all_raw.extend(arxiv_papers)
 
         if not args.arxiv_only and config["sources"]["conferences"]["enabled"]:
             logger.info("=== Crawling Conferences ===")
-            conf_papers = conference_crawler.fetch(config)
+            conf_papers = conference_crawler.fetch(config, known_titles)
             all_raw.extend(conf_papers)
 
         logger.info(f"Total raw papers collected: {len(all_raw)}")

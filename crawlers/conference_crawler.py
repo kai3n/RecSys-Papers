@@ -35,14 +35,15 @@ S2_VENUE_ALIASES = {
 S2_DELAY = 1.5
 
 
-def fetch(config: dict) -> List[Dict]:
+def fetch(config: dict, known_titles: set = None) -> List[Dict]:
     conf_cfg = config["sources"]["conferences"]
     venues   = conf_cfg["venues"]
     years    = conf_cfg["years"]
     keywords = config["keywords"]["primary"] + config["keywords"]["secondary"]
 
     all_papers: List[Dict] = []
-    seen_titles: set = set()
+    # Seed seen_titles from DB so we skip already-stored papers
+    seen_titles: set = set(known_titles) if known_titles else set()
 
     for venue_cfg in venues:
         stream  = venue_cfg["dblp_stream"]

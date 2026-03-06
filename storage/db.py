@@ -72,6 +72,11 @@ class PaperDB:
         logger.info(f"DB: inserted {inserted} new papers (attempted {len(rows)})")
         return inserted
 
+    def existing_titles(self) -> set:
+        """Return a set of lowercased titles already in the DB."""
+        cursor = self.conn.execute("SELECT title FROM papers")
+        return {row[0].lower() for row in cursor.fetchall()}
+
     def load_all(self) -> List[Dict]:
         cursor = self.conn.execute(
             "SELECT * FROM papers ORDER BY score DESC, date DESC"
