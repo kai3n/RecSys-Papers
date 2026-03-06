@@ -1,0 +1,55 @@
+date_range:
+  start: "2023-01-01"
+  end: null  # null = today
+
+sources:
+  arxiv:
+    enabled: true
+    categories:
+      - cs.IR
+      - cs.LG
+      - cs.AI
+    max_results: 500
+
+  conferences:
+    enabled: true
+    venues:
+      - name: RecSys
+        dblp_stream: conf/recsys
+      - name: KDD
+        dblp_stream: conf/kdd
+      - name: WWW
+        dblp_stream: conf/www
+      - name: SIGIR
+        dblp_stream: conf/sigir
+    years: [2023, 2024, 2025]
+
+keywords:
+  primary:
+    - CTR prediction
+    - CVR prediction
+    - click-through rate
+    - conversion rate
+    - click prediction
+    - purchase prediction
+  secondary:
+    - recommender system
+    - recommendation system
+    - collaborative filtering
+    - sequential recommendation
+    - user behavior modeling
+    - feature interaction
+    - multi-task learning
+    - ranking model
+    - deep interest network
+    - industrial recommendation
+
+scoring:
+  primary_weight: 3
+  secondary_weight: 1
+  min_score: 1  # minimum score to include paper
+
+output:
+  directory: ./output
+  html: papers.html
+  markdown: papers.md
