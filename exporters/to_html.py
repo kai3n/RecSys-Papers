@@ -328,5 +328,11 @@ def export(papers: List[Dict], output_path: str) -> None:
     with open(output_path, "w", encoding="utf-8") as f:
         f.write(rendered)
 
+    # Also write index.html at repo root for GitHub Pages
+    import os
+    root_index = os.path.join(os.path.dirname(os.path.dirname(output_path)), "index.html")
+    with open(root_index, "w", encoding="utf-8") as f:
+        f.write(rendered)
+
     summarized = sum(1 for p in papers if p.get("summary"))
     print(f"HTML saved: {output_path} ({len(papers)} papers, {summarized} with summaries)")
