@@ -77,14 +77,11 @@ def _fetch_venue_year(
     if papers:
         relevant = _title_filter(papers, keywords)
         logger.info(f"  {display} {year}: {len(papers)} dblp -> {len(relevant)} keyword-match")
-        _enrich_abstracts(relevant)
         return relevant
 
-    # dblp failed — use Semantic Scholar directly
-    logger.info(f"  {display} {year}: dblp unavailable, using Semantic Scholar")
-    papers = _s2_venue_fetch(display, year, keywords, seen_titles)
-    logger.info(f"  {display} {year}: {len(papers)} papers via S2")
-    return papers
+    # dblp failed — skip (S2 fallback removed to avoid rate limiting)
+    logger.warning(f"  {display} {year}: dblp unavailable, skipping")
+    return []
 
 
 # ---------------------------------------------------------------------------
